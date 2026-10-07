@@ -189,6 +189,8 @@ function say(t, err) {
   if (!err) msgTimer = setTimeout(function () { m.textContent = ''; }, 4000);
 }
 
+// En la compu (mouse) el cursor vuelve al monto; en el celular el teclado se cierra al agregar.
+const finePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 let saving = false;
 function add() {
   if (saving) return;
@@ -198,7 +200,8 @@ function add() {
   const typed = $('monto').value;
   const nota = $('nota').value.trim();
   $('monto').value = '';
-  $('monto').focus();
+  if (finePointer) $('monto').focus();
+  else if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
   saving = true; $('add').disabled = true;
   storage.add({ tipo: kind, monto: n, categoria: cat || 'Varios', nota: nota }).then(function (item) {
     viewMonth = monthKey(item.ts);
@@ -519,7 +522,7 @@ function refreshSafety() {
   renderCloud();
 }
 
-if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) $('monto').focus();
+if (finePointer) $('monto').focus();
 
 storage.load().then(function (list) {
   items = list;
