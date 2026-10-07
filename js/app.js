@@ -515,66 +515,9 @@ $('logoutBtn').addEventListener('click', function () {
   cloud.signOut().then(function () { acctMsg('Sesión cerrada. Tus datos siguen guardados en este teléfono.'); });
 });
 
-// --- Tus datos: estado, instalación y copias de seguridad ---
-const DAY = 86400000;
-function safeMsg(t, err) {
-  const m = $('safeMsg');
-  m.textContent = t;
-  m.className = 'msg' + (err ? ' err' : '');
-}
-
 function refreshSafety() {
   renderCloud();
-  const standalone = window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
-  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  const tip = $('installTip');
-  if (!standalone) {
-    tip.hidden = false;
-    tip.innerHTML = ios
-      ? '<b>Consejo:</b> instalala en el iPhone para que Safari nunca borre tus datos: tocá Compartir <b>⎋</b> y después <b>Agregar a pantalla de inicio</b>.'
-      : '<b>Consejo:</b> instalala como app (menú del navegador → <b>Instalar</b> o <b>Agregar a pantalla de inicio</b>) para que tus datos queden protegidos.';
-  } else {
-    tip.hidden = true;
-  }
-  const last = storage.lastBackup();
-  const warn = $('backupWarn');
-  const count = items.length;
-  if (!cloud.status().email && count >= 5 && (!last || Date.now() - last > 30 * DAY)) {
-    warn.hidden = false;
-    warn.textContent = last
-      ? 'Hace más de 30 días que no descargás una copia de seguridad. Si perdés o reseteás el teléfono, sin copia se pierden los datos.'
-      : 'Todavía no descargaste ninguna copia de seguridad. Te conviene tener una por si perdés o reseteás el teléfono.';
-  } else {
-    warn.hidden = true;
-  }
-  $('safeStatus').textContent = 'Todo se guarda automáticamente en este dispositivo apenas lo agregás (' + count + ' movimiento' + (count === 1 ? '' : 's') + ').'
-    + (last ? ' Última copia de seguridad: ' + new Date(last).toLocaleDateString('es-AR', { timeZone: TZ }) + '.' : '');
 }
-
-$('exportBtn').addEventListener('click', function () {
-  const blob = new Blob([storage.exportJson()], { type: 'application/json' });
-  const p = baParts(Date.now());
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'libreta-gastos-' + p.year + '-' + p.month + '-' + p.day + '.json';
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-  safeMsg('Copia descargada. Guardala en un lugar seguro (por ejemplo, en Archivos o en Drive).');
-  refreshSafety();
-});
-$('importBtn').addEventListener('click', function () { $('importFile').click(); });
-$('importFile').addEventListener('change', function (e) {
-  const f = e.target.files && e.target.files[0];
-  e.target.value = '';
-  if (!f) return;
-  f.text().then(function (t) { return storage.importJson(t); }).then(function (n) {
-    changed();
-    safeMsg(n ? 'Se recuperaron ' + n + ' movimiento' + (n === 1 ? '' : 's') + '. Lo que ya tenías no se tocó.' : 'La copia no tenía movimientos nuevos: ya estaban todos.');
-  }, function () {
-    safeMsg('Ese archivo no es una copia de seguridad de la libreta.', true);
-  });
-});
 
 if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) $('monto').focus();
 
