@@ -1,5 +1,5 @@
 // Primero intenta la red (para recibir las actualizaciones) y, sin conexión, usa la copia guardada.
-const CACHE = 'libreta-gastos-v2';
+const CACHE = 'libreta-gastos-v3';
 const SHELL = ['./', 'index.html', 'css/styles.css', 'js/app.js', 'js/storage.js', 'js/cloud.js', 'js/config.js', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (e) => {

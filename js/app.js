@@ -72,6 +72,18 @@ function niceName(s) {
   return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
 }
 let creatingCat = false;
+// Toma lo escrito en "Otro tipo" y lo deja elegido. Devuelve false si estaba vacío.
+function applyNewCat() {
+  const inp = $('newCat');
+  const name = inp ? niceName(inp.value) : '';
+  if (!name) return false;
+  const existing = typesFor(kind).find(function (c) { return c.toLowerCase() === name.toLowerCase(); });
+  cat = existing || name;
+  if (!existing) saveCustom(kind, name);
+  creatingCat = false;
+  renderCats();
+  return true;
+}
 function renderCats() {
   let box = $('cats');
   box.innerHTML = '';
@@ -102,17 +114,13 @@ function renderCats() {
   inp.setAttribute('aria-label', 'Nombre del tipo nuevo');
   let ok = document.createElement('button'); ok.type = 'button'; ok.className = 'cat'; ok.textContent = 'Usar';
   let no = document.createElement('button'); no.type = 'button'; no.className = 'link'; no.textContent = 'Cancelar';
-  function use() {
-    const name = niceName(inp.value);
-    if (!name) { inp.focus(); return; }
-    const existing = typesFor(kind).find(function (c) { return c.toLowerCase() === name.toLowerCase(); });
-    cat = existing || name;
-    if (!existing) saveCustom(kind, name);
-    creatingCat = false;
-    renderCats();
-    $('monto').focus();
+  function use(focusAmount) {
+    if (!applyNewCat()) { inp.focus(); return; }
+    if (focusAmount !== false) $('monto').focus();
   }
   ok.addEventListener('click', use);
+  // Si escribió el tipo y pasó a otro campo sin tocar Usar, se aplica igual.
+  inp.addEventListener('change', function () { if (niceName(inp.value)) setTimeout(function () { if (creatingCat) applyNewCat(); }, 0); });
   inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); use(); } if (e.key === 'Escape') { creatingCat = false; renderCats(); } });
   no.addEventListener('click', function () { creatingCat = false; renderCats(); });
   row.append(inp, ok, no);
@@ -184,6 +192,7 @@ function say(t, err) {
 let saving = false;
 function add() {
   if (saving) return;
+  if (creatingCat) applyNewCat();
   let n = parseAmount($('monto').value);
   if (isNaN(n)) { say('Escribí un monto mayor a 0 (por ejemplo 2500).', true); $('monto').focus(); return; }
   const typed = $('monto').value;
