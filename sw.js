@@ -1,5 +1,5 @@
 // Primero intenta la red (para recibir las actualizaciones) y, sin conexión, usa la copia guardada.
-const CACHE = 'libreta-gastos-v6';
+const CACHE = 'libreta-gastos-v7';
 const SHELL = ['./', 'index.html', 'css/styles.css', 'js/app.js', 'js/storage.js', 'js/cloud.js', 'js/config.js', 'manifest.webmanifest', 'icons/icono.png'];
 
 self.addEventListener('install', (e) => {
