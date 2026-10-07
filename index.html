@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Libreta de gastos</title>
+<meta name="description" content="Anotá tus gastos e ingresos y mirá el balance del mes.">
+<meta name="theme-color" content="#F2F4F7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0F141B" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gastos">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Libreta de gastos</h1>
+      <p class="clock num" id="clock">Buenos Aires</p>
+    </div>
+    <span class="sync" id="sync">Cargando…</span>
+  </header>
+
+  <section class="card form-gasto" id="form" aria-label="Agregar movimiento">
+    <div class="kind" role="group" aria-label="Tipo de movimiento">
+      <button type="button" class="gasto" id="kGasto" aria-pressed="true">− Gasto</button>
+      <button type="button" class="ingreso" id="kIngreso" aria-pressed="false">+ Ingreso</button>
+    </div>
+    <label class="amount" for="monto"><span>$</span><input id="monto" class="num" type="text" inputmode="numeric" pattern="[0-9]*" enterkeyhint="done" autocomplete="off" autocorrect="off" spellcheck="false" placeholder="0" aria-label="Monto en pesos"></label>
+    <div>
+      <div class="cats-label" id="catsLabel">Tipo de gasto (si no elegís, va a Varios)</div>
+    </div>
+    <div class="cats" id="cats" role="group" aria-labelledby="catsLabel"></div>
+    <input id="nota" type="text" maxlength="80" placeholder="Nota opcional (ej: almuerzo con amigos)" aria-label="Nota opcional">
+    <button type="button" class="add" id="add">Agregar gasto</button>
+    <p class="msg" id="msg" role="status"></p>
+  </section>
+
+  <section class="card" aria-label="Resumen del mes">
+    <div class="month">
+      <button type="button" class="nav" id="prev" aria-label="Mes anterior">‹</button>
+      <h2 id="monthName">Mes</h2>
+      <button type="button" class="nav" id="next" aria-label="Mes siguiente">›</button>
+    </div>
+    <div class="totals">
+      <div class="tot in"><span class="k">Ingresos</span><span class="v num" id="tIn">$ 0</span></div>
+      <div class="tot out"><span class="k">Gastos</span><span class="v num" id="tOut">$ 0</span></div>
+      <div class="tot"><span class="k">Balance</span><span class="v num" id="tBal">$ 0</span></div>
+    </div>
+  </section>
+
+  <section class="card" aria-label="Movimientos del mes">
+    <h2>Movimientos</h2>
+    <div id="list"></div>
+  </section>
+
+  <section class="card" aria-label="Gráficos del mes">
+    <h2>Gráficos del mes</h2>
+    <div class="charts">
+      <div class="chart"><h3>Ingresos y gastos</h3><div id="pie1"></div><div class="legend" id="leg1"></div></div>
+      <div class="chart"><h3>Gastos por tipo</h3><div id="pie2"></div><div class="legend" id="leg2"></div></div>
+    </div>
+  </section>
+  <section class="card safe" aria-label="Tus datos">
+    <h2>Tus datos</h2>
+    <p id="safeStatus">Todo se guarda automáticamente en este dispositivo apenas lo agregás.</p>
+    <div class="acct" id="acct">
+      <div id="acctOff" hidden><p>La copia en la nube todavía no está configurada en esta app.</p></div>
+      <div id="acctIn" hidden>
+        <p id="acctInfo"></p>
+        <div class="safe-actions">
+          <button type="button" class="ghost" id="syncBtn">Sincronizar ahora</button>
+          <button type="button" class="ghost" id="logoutBtn">Cerrar sesión</button>
+        </div>
+      </div>
+      <form id="acctLogin" hidden>
+        <p><b>Guardá tus datos en la nube</b> para no perderlos aunque pierdas o cambies el teléfono. Te mandamos un código a tu email, sin contraseña.</p>
+        <div class="acct-row" id="stepEmail">
+          <input id="email" type="email" inputmode="email" autocomplete="email" placeholder="tu@email.com" aria-label="Tu email" required>
+          <button type="submit" class="ghost" id="sendCodeBtn">Enviarme el código</button>
+        </div>
+        <div class="acct-row" id="stepCode" hidden>
+          <input id="code" type="text" inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code" maxlength="8" placeholder="Código del email" aria-label="Código que te llegó por email">
+          <button type="button" class="ghost" id="verifyBtn">Entrar</button>
+          <button type="button" class="link" id="changeEmail">Usar otro email</button>
+        </div>
+      </form>
+      <p class="msg" id="acctMsg" role="status"></p>
+    </div>
+    <div class="install" id="installTip" hidden></div>
+    <div class="warn" id="backupWarn" hidden></div>
+    <div class="safe-actions">
+      <button type="button" class="ghost" id="exportBtn">Descargar copia de seguridad</button>
+      <button type="button" class="ghost" id="importBtn">Restaurar copia</button>
+      <input type="file" id="importFile" accept="application/json,.json" hidden>
+    </div>
+    <p class="msg" id="safeMsg" role="status"></p>
+  </section>
+</div>
+
+<div class="undo" id="undoBar" role="status" hidden>
+  <span id="undoText"></span>
+  <button type="button" id="undoBtn">Deshacer</button>
+  <button type="button" class="undo-x" id="undoClose" aria-label="Cerrar aviso">✕</button>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
