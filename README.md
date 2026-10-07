@@ -27,6 +27,17 @@ Configuración, una sola vez:
 
 En el plan gratis, Supabase pausa el proyecto si pasa una semana sin uso; los datos no se pierden y se reactiva desde el panel. Mientras tanto la app sigue guardando en el teléfono.
 
+## Cambiar el ícono
+
+El ícono es un solo archivo: `icons/icono.png`. Para cambiarlo, en la terminal:
+
+```
+cd ~/Documents/libreta-gastos
+./cambiar-icono.sh /ruta/a/tu-imagen.png
+```
+
+(o escribir `./cambiar-icono.sh ` y arrastrar la imagen a la terminal). Acepta PNG, JPG, HEIC o WEBP; si no es cuadrada se recorta al centro. Muestra cómo queda y, si confirmás con `s`, la publica. En el iPhone, el ícono de la pantalla de inicio cambia recién al volver a agregar la app.
+
 ## Correr en local
 
 ```
