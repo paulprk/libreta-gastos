@@ -7,6 +7,12 @@ let CATS = {
   ingreso: ['Sueldo', 'Ventas', 'Transferencia', 'Cambio', 'Varios']
 };
 let CAT_COLORS = ['#E4572E', '#F3A712', '#2E86AB', '#7B61FF', '#A23B72', '#17A398', '#F25F5C', '#3D5A80', '#8D6A9F', '#8A94A6'];
+const CUSTOM_COLORS = ['#0FA3B1', '#B5651D', '#5C946E', '#D1495B', '#6A4C93', '#EDAE49', '#00798C', '#9C6644', '#4D9DE0', '#C05299'];
+function customColor(name) {
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  return CUSTOM_COLORS[h % CUSTOM_COLORS.length];
+}
 
 let kind = 'gasto';
 let cat = null;
@@ -42,10 +48,35 @@ tick(); setInterval(tick, 30000);
 viewMonth = monthKey(Date.now());
 
 // --- Formulario ---
+// Tipos propios: los que creó la persona (guardados en el teléfono) más los que ya usan sus movimientos (así viajan con la nube).
+const CUSTOM_KEY = 'libreta-gastos:tipos';
+function readCustom() {
+  try { const o = JSON.parse(localStorage.getItem(CUSTOM_KEY) || '{}'); return { gasto: o.gasto || [], ingreso: o.ingreso || [] }; } catch (e) { return { gasto: [], ingreso: [] }; }
+}
+function saveCustom(k, name) {
+  const o = readCustom();
+  if (!o[k].includes(name)) o[k].push(name);
+  try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(o)); } catch (e) { /* igual queda en el movimiento */ }
+}
+function typesFor(k) {
+  const base = CATS[k].filter(function (c) { return c !== 'Varios'; });
+  const extra = [];
+  readCustom()[k].concat(items.filter(function (it) { return it.tipo === k; }).map(function (it) { return it.categoria; })).forEach(function (c) {
+    if (c && !CATS[k].includes(c) && !extra.includes(c)) extra.push(c);
+  });
+  extra.sort(function (a, b) { return a.localeCompare(b, 'es'); });
+  return base.concat(extra, ['Varios']);
+}
+function niceName(s) {
+  s = String(s).replace(/\s+/g, ' ').trim().slice(0, 24);
+  return s ? s.charAt(0).toUpperCase() + s.slice(1) : '';
+}
+let creatingCat = false;
 function renderCats() {
   let box = $('cats');
   box.innerHTML = '';
-  CATS[kind].forEach(function (c) {
+  if (cat && !typesFor(kind).includes(cat)) saveCustom(kind, cat);
+  typesFor(kind).forEach(function (c) {
     let b = document.createElement('button');
     b.type = 'button';
     b.className = 'cat';
@@ -54,9 +85,41 @@ function renderCats() {
     b.addEventListener('click', function () { cat = cat === c ? null : c; renderCats(); });
     box.appendChild(b);
   });
+  if (!creatingCat) {
+    let plus = document.createElement('button');
+    plus.type = 'button';
+    plus.className = 'cat cat-new';
+    plus.textContent = '+ Otro tipo';
+    plus.addEventListener('click', function () { creatingCat = true; renderCats(); $('newCat').focus(); });
+    box.appendChild(plus);
+    return;
+  }
+  let row = document.createElement('div');
+  row.className = 'new-cat';
+  let inp = document.createElement('input');
+  inp.id = 'newCat'; inp.type = 'text'; inp.maxLength = 24; inp.autocomplete = 'off';
+  inp.placeholder = kind === 'gasto' ? 'Ej: Luz, Gimnasio, Mascota' : 'Ej: Aguinaldo, Changas';
+  inp.setAttribute('aria-label', 'Nombre del tipo nuevo');
+  let ok = document.createElement('button'); ok.type = 'button'; ok.className = 'cat'; ok.textContent = 'Usar';
+  let no = document.createElement('button'); no.type = 'button'; no.className = 'link'; no.textContent = 'Cancelar';
+  function use() {
+    const name = niceName(inp.value);
+    if (!name) { inp.focus(); return; }
+    const existing = typesFor(kind).find(function (c) { return c.toLowerCase() === name.toLowerCase(); });
+    cat = existing || name;
+    if (!existing) saveCustom(kind, name);
+    creatingCat = false;
+    renderCats();
+    $('monto').focus();
+  }
+  ok.addEventListener('click', use);
+  inp.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); use(); } if (e.key === 'Escape') { creatingCat = false; renderCats(); } });
+  no.addEventListener('click', function () { creatingCat = false; renderCats(); });
+  row.append(inp, ok, no);
+  box.appendChild(row);
 }
 function setKind(k) {
-  kind = k; cat = null;
+  kind = k; cat = null; creatingCat = false;
   $('kGasto').setAttribute('aria-pressed', String(k === 'gasto'));
   $('kIngreso').setAttribute('aria-pressed', String(k === 'ingreso'));
   $('form').className = 'card form-' + k;
@@ -337,7 +400,7 @@ function renderPies(month, tin, tout) {
   month.forEach(function (it) { if (it.tipo === 'gasto') byCat[it.categoria] = (byCat[it.categoria] || 0) + it.monto; });
   let slices = Object.keys(byCat).sort(function (a, b) { return byCat[b] - byCat[a]; }).map(function (k) {
     let i = CATS.gasto.indexOf(k);
-    return { label: k, value: byCat[k], color: CAT_COLORS[i >= 0 ? i : CAT_COLORS.length - 1] };
+    return { label: k, value: byCat[k], color: i >= 0 ? CAT_COLORS[i] : customColor(k) };
   });
   pie($('pie2'), $('leg2'), slices);
 }
@@ -508,9 +571,10 @@ if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) $('monto').
 
 storage.load().then(function (list) {
   items = list;
+  renderCats();
   render();
   refreshSafety();
-  cloud.init({ onChange: function () { items = storage.all(); render(); refreshSafety(); }, onStatus: function () { renderCloud(); render(); } });
+  cloud.init({ onChange: function () { items = storage.all(); if (!creatingCat) renderCats(); render(); refreshSafety(); }, onStatus: function () { renderCloud(); render(); } });
 });
 
 if ('serviceWorker' in navigator && location.protocol !== 'file:') {

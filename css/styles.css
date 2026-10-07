@@ -157,3 +157,6 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--focus); out
 .cloud { font-size: 12px; color: var(--soft); width: 1.2em; text-align: center; }
 .cloud.ok { color: var(--green); }
 .row { grid-template-columns: 4px 1fr auto auto auto; }
+.cat-new { border-style: dashed; color: var(--soft); }
+.new-cat { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; width: 100%; }
+.new-cat input { flex: 1 1 12rem; min-width: 0; font: inherit; font-size: 16px; padding: 8px 12px; border-radius: 999px; border: 1px solid var(--accent); background: var(--surface); color: var(--ink); }
