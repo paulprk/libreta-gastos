@@ -49,3 +49,7 @@ y abrir http://localhost:5173
 ## Deploy
 
 Sitio estático: se sube tal cual a Vercel (sin build).
+
+## Cómo se hizo
+
+Este proyecto fue desarrollado con asistencia de IA (Claude Code). Yo definí qué quería construir, y fui revisando y probando el resultado.
